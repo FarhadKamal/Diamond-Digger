@@ -22,10 +22,6 @@ Directional hints that guide you to the diamond
 
 Smooth animations and visual effects
 
-Mobile-responsive design
-
-No scrolling required - fits perfectly on any screen
-
 Mysterious atmosphere with glowing effects
 
 🎯 Game Rules
@@ -53,12 +49,6 @@ CSS3 - Styling and animations (with golden ratio proportions)
 
 JavaScript - Game logic and interactivity
 
-📱 Compatibility
-Desktop and mobile browsers
-
-Chrome, Firefox, Safari, Edge
-
-Responsive design for all screen sizes
 
 🎨 Design Notes
 The game uses the golden ratio (1.618:1) for its 13×8 grid layout, creating a visually pleasing and mathematically harmonious experience. All animations and effects are optimized to prevent layout shifts.
