@@ -1,8 +1,10 @@
+
 💎 Diamond Digger
 ⛏️ Find the hidden diamond in the 8×13 grid with only 5 attempts!
 
 🎮 Play the Game
 Play Diamond Digger Here
+[Play Diamond Digger Here](https://farhadkamal.github.io/Diamond-Digger/)
 
 🕹️ How to Play
 Click on any cell in the 8×13 grid to dig
