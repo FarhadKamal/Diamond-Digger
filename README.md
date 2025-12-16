@@ -39,7 +39,7 @@ Game ends when you find the diamond or run out of digs
 Clone the repository:
 
 bash
-git clone https://github.com/your-username/diamond-digger.git
+git clone https://github.com/FarhadKamal/diamond-digger.git
 Open index.html in your browser
 
 Start digging!
