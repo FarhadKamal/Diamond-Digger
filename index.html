@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⛏️💎</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+        
+        .game-container {
+            width: min(95vw, calc(95vh * 1.618));
+            height: min(95vh, calc(95vw / 1.618));
+            background-color: rgba(30, 30, 46, 0.95);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.7);
+            border: 3px solid #3949ab;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e91e63;
+            flex-shrink: 0;
+            height: 70px;
+        }
+        
+        h1 {
+            color: #e91e63;
+            font-size: 28px;
+            margin-bottom: 5px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            letter-spacing: 1px;
+        }
+        
+        .game-description {
+            color: #bbbbdd;
+            font-size: 14px;
+            line-height: 1.4;
+            max-width: 80%;
+            margin: 0 auto;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            background: linear-gradient(135deg, #232339 0%, #1e1e33 100%);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 2px solid #3949ab;
+            flex-shrink: 0;
+            height: 80px;
+        }
+        
+        .digs-remaining, .hint-box {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .digs-remaining {
+            border-right: 2px solid #3949ab;
+        }
+        
+        .digs-remaining h3, .hint-box h3 {
+            color: #4fc3f7;
+            margin-bottom: 5px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .dig-counter {
+            font-size: 32px;
+            font-weight: bold;
+            color: #ff9800;
+            text-shadow: 0 0 15px rgba(255, 152, 0, 0.7);
+        }
+        
+        .hint-text {
+            font-size: 18px;
+            font-weight: bold;
+            color: #69f0ae;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 40px;
+        }
+        
+        .game-board-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            margin-bottom: 15px;
+            background: rgba(25, 25, 40, 0.7);
+            border-radius: 10px;
+            padding: 10px;
+            border: 2px solid #283593;
+            overflow: hidden; /* Add this */
+        }
+        
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(13, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            grid-gap: 4px;
+            flex-grow: 1;
+            min-height: 0;
+            /* Remove contain: strict and add these properties */
+            overflow: visible; /* Allow glow effects to overflow */
+            position: relative;
+        }
+        
+        .grid-cell {
+            background: linear-gradient(145deg, #3949ab, #283593);
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: visible; /* Keep this */
+            font-size: 0;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+            min-width: 0;
+            min-height: 0;
+            z-index: 1; /* Add z-index */
+        }
+        
+        .grid-cell:hover:not(.dug):not(.diamond) {
+            background: linear-gradient(145deg, #5c6bc0, #3949ab);
+            box-shadow: 0 0 15px rgba(92, 107, 192, 0.5);
+        }
+        
+        .grid-cell.dug {
+            background: linear-gradient(145deg, #ff8e6b, #ff7043);
+            cursor: default;
+        }
+        
+        .grid-cell.diamond {
+            background: linear-gradient(145deg, #00e676, #00c853);
+            z-index: 3; /* Increase z-index for diamond cells */
+        }
+        
+        .diamond-glow {
+            position: absolute;
+            top: -8px; /* Increase glow area */
+            left: -8px;
+            right: -8px;
+            bottom: -8px;
+            border-radius: 6px; /* Slightly larger radius */
+            background: transparent;
+            animation: diamond-glow-animation 2s infinite;
+            pointer-events: none;
+            z-index: 2; /* Ensure glow is above cell but below icon */
+        }
+        
+        @keyframes diamond-glow-animation {
+            0% {
+                box-shadow: 
+                    inset 0 0 15px #00e676, /* Increase glow */
+                    0 0 10px rgba(0, 230, 118, 0.7);
+            }
+            50% {
+                box-shadow: 
+                    inset 0 0 25px #00e676,
+                    0 0 20px rgba(0, 230, 118, 0.9),
+                    0 0 30px rgba(0, 230, 118, 0.5);
+            }
+            100% {
+                box-shadow: 
+                    inset 0 0 15px #00e676,
+                    0 0 10px rgba(0, 230, 118, 0.7);
+            }
+        }
+        
+        .diamond-icon {
+            font-size: 24px;
+            z-index: 4; /* Highest z-index */
+            position: relative;
+            animation: diamond-icon-shine 2s infinite;
+        }
+        
+        @keyframes diamond-icon-shine {
+            0%, 100% { 
+                filter: drop-shadow(0 0 2px #00e676);
+                transform: scale(1);
+            }
+            50% { 
+                filter: drop-shadow(0 0 10px #00e676); /* Increase glow */
+                transform: scale(1.1);
+            }
+        }
+        
+        /* Rest of your CSS remains the same... */
+        .direction-indicators {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            flex-shrink: 0;
+            height: 60px;
+        }
+        
+        .direction {
+            width: calc(25% - 5px);
+            padding: 8px;
+            text-align: center;
+            background: linear-gradient(145deg, #232339, #1e1e33);
+            border-radius: 6px;
+            border: 1px solid #444466;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .direction.active {
+            background: linear-gradient(145deg, #e91e63, #c2185b);
+            color: #fff;
+            box-shadow: 0 5px 15px rgba(233, 30, 99, 0.4);
+            border-color: #ff4081;
+        }
+        
+        .direction h4 {
+            color: #4fc3f7;
+            margin-bottom: 3px;
+            font-size: 12px;
+        }
+        
+        .direction p {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+            flex-shrink: 0;
+            height: 50px;
+        }
+        
+        button {
+            padding: 10px 25px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 180px;
+            letter-spacing: 0.5px;
+        }
+        
+        #restart-btn {
+            background: linear-gradient(145deg, #e91e63, #c2185b);
+            color: white;
+        }
+        
+        #restart-btn:hover {
+            background: linear-gradient(145deg, #f50057, #d81b60);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(233, 30, 99, 0.4);
+        }
+        
+        #hint-btn {
+            background: linear-gradient(145deg, #4fc3f7, #29b6f6);
+            color: #1a1a2e;
+        }
+        
+        #hint-btn:hover {
+            background: linear-gradient(145deg, #29b6f6, #0288d1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(79, 195, 247, 0.4);
+        }
+        
+        /* Popup message styles */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .popup-message {
+            background: linear-gradient(145deg, #232339, #1e1e33);
+            border-radius: 15px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 3px solid;
+            animation: popupAppear 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        @keyframes popupAppear {
+            from {
+                opacity: 0;
+                transform: scale(0.8) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        
+        .win-popup {
+            border-color: #00e676;
+        }
+        
+        .win-popup::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(0, 230, 118, 0.1), rgba(0, 200, 83, 0.05));
+            pointer-events: none;
+        }
+        
+        .lose-popup {
+            border-color: #f44336;
+        }
+        
+        .lose-popup::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(244, 67, 54, 0.1), rgba(211, 47, 47, 0.05));
+            pointer-events: none;
+        }
+        
+        .popup-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            animation: iconBounce 1s ease infinite;
+        }
+        
+        @keyframes iconBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .popup-title {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: white;
+        }
+        
+        .win-title {
+            color: #00e676;
+            text-shadow: 0 0 20px rgba(0, 230, 118, 0.5);
+        }
+        
+        .lose-title {
+            color: #f44336;
+            text-shadow: 0 0 20px rgba(244, 67, 54, 0.5);
+        }
+        
+        .popup-content {
+            font-size: 18px;
+            color: #bbbbdd;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+        
+        .popup-button {
+            background: linear-gradient(145deg, #e91e63, #c2185b);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        .popup-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(233, 30, 99, 0.4);
+            background: linear-gradient(145deg, #f50057, #d81b60);
+        }
+        
+        .sparkle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: white;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 5; /* Above everything */
+            animation: sparkle-fly 1s ease-out forwards;
+        }
+        
+        @keyframes sparkle-fly {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) scale(0);
+                opacity: 0;
+            }
+        }
+        
+        @media (max-width: 1200px) {
+            .game-container {
+                width: 95vw;
+                height: calc(95vw / 1.618);
+            }
+            
+            .grid-cell {
+                font-size: 0;
+            }
+            
+            .diamond-icon {
+                font-size: 20px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .game-description {
+                font-size: 12px;
+            }
+            
+            .popup-message {
+                padding: 30px;
+                max-width: 400px;
+            }
+            
+            .popup-icon {
+                font-size: 50px;
+            }
+            
+            .popup-title {
+                font-size: 28px;
+            }
+            
+            .popup-content {
+                font-size: 16px;
+            }
+        }
+        
+        @media (max-height: 700px) {
+            .game-container {
+                width: calc(95vh * 1.618);
+                height: 95vh;
+            }
+            
+            header {
+                height: 60px;
+                margin-bottom: 10px;
+            }
+            
+            h1 {
+                font-size: 22px;
+            }
+            
+            .game-description {
+                font-size: 11px;
+            }
+            
+            .game-info {
+                height: 70px;
+                margin-bottom: 10px;
+                padding: 10px;
+            }
+            
+            .digs-remaining h3, .hint-box h3 {
+                font-size: 14px;
+            }
+            
+            .dig-counter {
+                font-size: 28px;
+            }
+            
+            .hint-text {
+                font-size: 16px;
+                height: 35px;
+            }
+            
+            .direction-indicators {
+                height: 50px;
+                margin-top: 8px;
+            }
+            
+            .direction p {
+                font-size: 18px;
+            }
+            
+            .controls {
+                height: 45px;
+                margin-top: 10px;
+            }
+            
+            button {
+                padding: 8px 20px;
+                font-size: 14px;
+                width: 160px;
+            }
+            
+            .popup-message {
+                padding: 25px;
+                max-width: 350px;
+            }
+            
+            .popup-icon {
+                font-size: 45px;
+                margin-bottom: 15px;
+            }
+            
+            .popup-title {
+                font-size: 24px;
+                margin-bottom: 10px;
+            }
+            
+            .popup-content {
+                font-size: 15px;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <header>
+            <h1>⛏️💎 Diamond Digger</h1>
+            <p class="game-description">
+                Find the diamond in 5 digs. The shadows will guide you.
+            </p>
+        </header>
+        
+        <div class="game-info">
+            <div class="digs-remaining">
+                <h3>Digs Remaining</h3>
+                <div class="dig-counter">5</div>
+            </div>
+            <div class="hint-box">
+                <h3>Current Hint</h3>
+                <div class="hint-text">Click a cell to start digging!</div>
+            </div>
+        </div>
+        
+        <div class="game-board-container">
+            <div class="game-board" id="game-board">
+                <!-- Grid cells will be generated by JavaScript -->
+            </div>
+            
+            <div class="direction-indicators">
+                <div class="direction" id="north-direction">
+                    <h4>North</h4>
+                    <p>↑</p>
+                </div>
+                <div class="direction" id="south-direction">
+                    <h4>South</h4>
+                    <p>↓</p>
+                </div>
+                <div class="direction" id="west-direction">
+                    <h4>West</h4>
+                    <p>←</p>
+                </div>
+                <div class="direction" id="east-direction">
+                    <h4>East</h4>
+                    <p>→</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="restart-btn">🔄 Restart Game</button>
+            <button id="hint-btn">💡 How to Play</button>
+        </div>
+    </div>
+
+    <!-- Win Popup -->
+    <div class="popup-overlay" id="win-popup">
+        <div class="popup-message win-popup">
+            <div class="popup-icon">💎</div>
+            <div class="popup-title win-title">CONGRATULATIONS!</div>
+            <div class="popup-content">
+                You found the diamond!<br>
+                Excellent detective work!
+            </div>
+            <button class="popup-button" id="play-again-btn">Play Again</button>
+        </div>
+    </div>
+
+    <!-- Lose Popup -->
+    <div class="popup-overlay" id="lose-popup">
+        <div class="popup-message lose-popup">
+            <div class="popup-icon">💎</div>
+            <div class="popup-title lose-title">GAME OVER</div>
+            <div class="popup-content">
+                You ran out of digs!<br>
+                The diamond remains hidden.
+            </div>
+            <button class="popup-button" id="try-again-btn">Try Again</button>
+        </div>
+    </div>
+
+    <script>
+        // Game variables
+        const ROWS = 8;
+        const COLS = 13;
+        const TOTAL_DIGS = 5;
+        
+        let gameBoard = [];
+        let diamondPosition = { row: -1, col: -1 };
+        let digsRemaining = TOTAL_DIGS;
+        let gameOver = false;
+        let dugCells = [];
+        
+        // DOM elements
+        const gameBoardElement = document.getElementById('game-board');
+        const digCounterElement = document.querySelector('.dig-counter');
+        const hintTextElement = document.querySelector('.hint-text');
+        const winPopup = document.getElementById('win-popup');
+        const losePopup = document.getElementById('lose-popup');
+        const restartButton = document.getElementById('restart-btn');
+        const hintButton = document.getElementById('hint-btn');
+        const playAgainButton = document.getElementById('play-again-btn');
+        const tryAgainButton = document.getElementById('try-again-btn');
+        
+        // Direction elements
+        const northDirection = document.getElementById('north-direction');
+        const southDirection = document.getElementById('south-direction');
+        const westDirection = document.getElementById('west-direction');
+        const eastDirection = document.getElementById('east-direction');
+        
+        // Initialize the game
+        function initGame() {
+            // Reset game state
+            gameBoard = [];
+            digsRemaining = TOTAL_DIGS;
+            gameOver = false;
+            dugCells = [];
+            
+            // Hide popups
+            winPopup.style.display = 'none';
+            losePopup.style.display = 'none';
+            
+            // Update UI
+            digCounterElement.textContent = digsRemaining;
+            hintTextElement.textContent = 'Click a cell to start digging!';
+            
+            // Reset direction indicators
+            resetDirectionIndicators();
+            
+            // Create the game board
+            createGameBoard();
+            
+            // Place the diamond randomly
+            placeDiamond();
+        }
+        
+        // Create the 8x13 game board
+        function createGameBoard() {
+            // Clear the game board
+            gameBoardElement.innerHTML = '';
+            
+            // Create grid cells
+            for (let row = 0; row < ROWS; row++) {
+                gameBoard[row] = [];
+                for (let col = 0; col < COLS; col++) {
+                    // Create cell element
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    
+                    // Add click event listener
+                    cell.addEventListener('click', () => handleCellClick(row, col));
+                    
+                    // Add to game board
+                    gameBoardElement.appendChild(cell);
+                    gameBoard[row][col] = cell;
+                }
+            }
+        }
+        
+        // Place the diamond at a random position
+        function placeDiamond() {
+            const randomRow = Math.floor(Math.random() * ROWS);
+            const randomCol = Math.floor(Math.random() * COLS);
+            
+            diamondPosition = { row: randomRow, col: randomCol };
+        }
+        
+        // Handle cell click (digging)
+        function handleCellClick(row, col) {
+            // Check if game is over or cell already dug
+            if (gameOver || dugCells.some(cell => cell.row === row && cell.col === col)) {
+                return;
+            }
+            
+            // Check if digs remain
+            if (digsRemaining <= 0) {
+                endGame(false);
+                return;
+            }
+            
+            // Mark cell as dug
+            const cell = gameBoard[row][col];
+            cell.classList.add('dug');
+            dugCells.push({ row, col });
+            
+            // Check if diamond is found
+            if (row === diamondPosition.row && col === diamondPosition.col) {
+                // Found the diamond!
+                cell.classList.add('diamond');
+                const glow = document.createElement('div');
+                glow.className = 'diamond-glow';
+                cell.appendChild(glow);
+                
+                const icon = document.createElement('div');
+                icon.className = 'diamond-icon';
+                icon.textContent = '💎';
+                cell.appendChild(icon);
+                
+                endGame(true);
+                createSparkles(cell);
+                return;
+            }
+            
+            // Reduce digs remaining
+            digsRemaining--;
+            digCounterElement.textContent = digsRemaining;
+            
+            // Provide hint based on diamond position
+            provideHint(row, col);
+            
+            // Check if digs are exhausted
+            if (digsRemaining <= 0) {
+                endGame(false);
+            }
+        }
+        
+        // Create sparkles animation
+        function createSparkles(cell) {
+            const sparkleCount = 12;
+            for (let i = 0; i < sparkleCount; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'sparkle';
+                
+                // Random direction and distance
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 40 + Math.random() * 50;
+                const tx = Math.cos(angle) * distance;
+                const ty = Math.sin(angle) * distance;
+                
+                sparkle.style.setProperty('--tx', `${tx}px`);
+                sparkle.style.setProperty('--ty', `${ty}px`);
+                sparkle.style.left = '50%';
+                sparkle.style.top = '50%';
+                sparkle.style.backgroundColor = i % 2 === 0 ? '#00e676' : '#ffffff';
+                
+                cell.appendChild(sparkle);
+                
+                // Remove sparkle after animation
+                setTimeout(() => {
+                    sparkle.remove();
+                }, 1000);
+            }
+        }
+        
+        // Provide directional hint
+        function provideHint(row, col) {
+            // Reset direction indicators
+            resetDirectionIndicators();
+            
+            // Determine direction to diamond
+            let hint = '';
+            
+            if (row > diamondPosition.row) {
+                // Diamond is north
+                hint = 'North';
+                northDirection.classList.add('active');
+            } else if (row < diamondPosition.row) {
+                // Diamond is south
+                hint = 'South';
+                southDirection.classList.add('active');
+            }
+            
+            if (col > diamondPosition.col) {
+                // Diamond is west
+                hint = hint ? hint + ' West' : 'West';
+                westDirection.classList.add('active');
+            } else if (col < diamondPosition.col) {
+                // Diamond is east
+                hint = hint ? hint + ' East' : 'East';
+                eastDirection.classList.add('active');
+            }
+            
+            // Update hint text
+            hintTextElement.textContent = `Diamond is to the ${hint}`;
+        }
+        
+        // Reset direction indicators
+        function resetDirectionIndicators() {
+            northDirection.classList.remove('active');
+            southDirection.classList.remove('active');
+            westDirection.classList.remove('active');
+            eastDirection.classList.remove('active');
+        }
+        
+        // End the game
+        function endGame(isWin) {
+            gameOver = true;
+            
+            // Disable all cells
+            document.querySelectorAll('.grid-cell').forEach(cell => {
+                cell.style.pointerEvents = 'none';
+            });
+            
+            if (isWin) {
+                // Show win popup
+                setTimeout(() => {
+                    winPopup.style.display = 'flex';
+                    hintTextElement.textContent = 'Diamond found! Excellent work!';
+                }, 500);
+            } else {
+                // Show lose popup and reveal diamond
+                setTimeout(() => {
+                    losePopup.style.display = 'flex';
+                    hintTextElement.textContent = 'No more digs remaining';
+                    revealDiamond();
+                }, 500);
+            }
+        }
+        
+        // Reveal the diamond position when game is lost
+        function revealDiamond() {
+            const { row, col } = diamondPosition;
+            const cell = gameBoard[row][col];
+            
+            // Mark the diamond cell
+            cell.classList.add('diamond');
+            const glow = document.createElement('div');
+            glow.className = 'diamond-glow';
+            cell.appendChild(glow);
+            
+            const icon = document.createElement('div');
+            icon.className = 'diamond-icon';
+            icon.textContent = '💎';
+            cell.appendChild(icon);
+        }
+        
+        // Show game instructions
+        function showInstructions() {
+            alert("HOW TO PLAY:\n\n1. Click on any cell in the 8x13 grid to dig.\n2. You have only 5 digs to find the hidden diamond.\n3. Each wrong dig will give you a hint about the diamond's direction.\n4. The directional indicators (N, S, E, W) will light up to show the hint.\n5. Use the hints wisely to locate the diamond before your digs run out!\n\nGood luck!");
+        }
+        
+        // Event listeners
+        restartButton.addEventListener('click', initGame);
+        hintButton.addEventListener('click', showInstructions);
+        playAgainButton.addEventListener('click', initGame);
+        tryAgainButton.addEventListener('click', initGame);
+        
+        // Close popup when clicking outside
+        winPopup.addEventListener('click', function(e) {
+            if (e.target === winPopup) {
+                winPopup.style.display = 'none';
+            }
+        });
+        
+        losePopup.addEventListener('click', function(e) {
+            if (e.target === losePopup) {
+                losePopup.style.display = 'none';
+            }
+        });
+        
+        // Initialize the game when page loads
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>
